@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ビンゴ</title>
+    <style type="text/css">
+        table {
+            margin: 5px 20px;
+            border: solid 2px;
+            border-collapse: collapse;
+        }
+
+        td {
+            border: solid 2px;
+            text-align: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        #table-space {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
+
+        .hit {
+            background-color: red;
+        }
+
+        .option {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .★ {
+            background-color: red;
+        }
+
+        #history {
+            width: 300px;
+            word-wrap: break-word;
+        }
+
+        .box {
+            display: inline-block;
+        }
+
+
+        .ID {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .result {
+            text-align: center;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="table-space"></div>
+    <div class="option">
+        数値の範囲<input id="R" type="number" value="25" min="1" max="9999">
+        サイズ<input id="B" type="number" value="5" min="1" max="15">
+        枚数<input id="sheets" type="number" value="5" min="1" max="100">
+        中央を空ける<input id="FREE" type="checkbox" checked>
+        <button id="create">ビンゴシート作成</button><br>
+        <p id="msg"></p>
+    </div>
+    <div class="main" id='main'>★</div>
+    <button id="button">スタート</button>
+    <div id="history"></div>
+
+    <script>
+
+        const creation = document.getElementById("create");
+        creation.addEventListener("click", pre_create, false);
+
+        let R;
+        let B;
+        let sheets;
+
+        let main = document.getElementById('main');
+        let button = document.getElementById('button');
+        let history = document.getElementById('history');
+
+        let ini_array = [];
+        let roulette = [];
+        let arrays = [];
+        let history_array = [];
+        let result_array = [];
+        let game_id;
+        let stop_r;
+
+
+        //入力された値を取得して、ビンゴ生成関数を起動する関数
+        function pre_create() {
+            R = document.getElementById("R").value;
+            B = document.getElementById("B").value;
+            sheets = document.getElementById("sheets").value;
+            let wrap = [R, B, sheets];
+            let error = 0;
+            for (i = 0; i < wrap.length; i++) {
+                if (wrap[i] < 1) {
+                    error++;
+                    break;
+                }
+            }
+
+            if (R > 999 || B > 11 || sheets > 50) {
+                error++;
+            }
+
+            if (error === 0) {
+                document.getElementById('msg').textContent = "総ビンゴ数：0";
+                bingo_sheets_creater();
+            } else {
+                document.getElementById('msg').textContent = "範囲は999、サイズは11、枚数は50までの整数値でお願いします";
+            }
+        }
+
+        //入力された値に従って、ビンゴシートを生成する関数
+        function bingo_sheets_creater() {
+            R = document.getElementById("R").value;
+            B = document.getElementById("B").value;
+            if (R < B * B) {
+                R = B * B;
+                document.getElementById("R").value = B * B;
+            }
+            sheets = document.getElementById("sheets").value;
+            const FREE = document.getElementById("FREE");
+
+            const T = document.getElementById('table-space');
+            while (T.firstChild) {
+                T.removeChild(T.firstChild);
+            }
+
+            ini_array = [];
+            roulette = [];
+            arrays = [];
+            history_array = [];
+            history.textContent = history_array;
+            result_array = [];
+            stop_r = true;
+
+
+            //参照用の配列を作成
+            for (i = 1; i <= R; i++) {
+                ini_array.push(i);
+            }
+
+            roulette = ini_array.concat();//ついでにルーレットもつくっておく(この段階なら一次元配列なので参照にならない)
+
+            //各値を数値とboolがセットになった配列に置き換える
+            for (i = 0; i < ini_array.length; i++) {
+                ini_array.splice(i, 1, [ini_array[i], false])
+            }
+
+            //任意の枚数分のビンゴシートを作成
+            for (i = 0; i < sheets; i++) {
+
+                array = ini_array.concat();//参照用の配列から配列を生成。シャロ―コピーなので参照先を共有する。
+
+                //配列をシャッフルする
+                for (j = array.length; 0 < j; j--) {
+                    k = Math.floor(Math.random() * array.length);
+                    [array[k], array[j - 1]] = [array[j - 1], array[k]];
+                }
+                array = array.slice(0, B * B);
+
+                if (FREE.checked) {
+                    array[(B * B - 1) / 2] = ["★", true];
+                }
+
+
+
+                //配列管理配列に入れる
+                arrays.push(array);
+
+                //描画を作成。子要素から順番に記述して最後に親要素にアペンドする。
+                let p = document.createElement('div');
+                p.textContent = "ID:" + (i + 1);
+                p.setAttribute("class", "ID");
+
+                let table = document.createElement('table');
+                for (j = 0; j < B; j++) {
+
+                    let tr = document.createElement('tr');
+                    for (k = 0; k < B; k++) {
+                        let td = document.createElement('td');
+                        td.textContent = array[j * B + k][0];
+                        td.setAttribute("class", (array[j * B + k][0]));
+                        tr.appendChild(td);
+                    }
+                    table.appendChild(tr);
+                }
+
+                let result = document.createElement('div');
+                result.textContent = "リーチ：0 ビンゴ：0"
+                result.setAttribute("id", i);
+                result.setAttribute("class", "result");
+
+
+                let box = document.createElement('div');
+                box.setAttribute("class", "box");
+                box.appendChild(p);
+                box.appendChild(table);
+                box.appendChild(result);
+                T.appendChild(box);
+            }
+
+        }
+
+
+        //ルーレットを押下した際の挙動メソッド
+        button.onclick = () => {
+
+            if (roulette.length === 0) {
+                alert('すべての番号の発表が終わりました');
+                clearInterval(timerId);
+                return;
+            }
+
+            if (button.textContent === 'スタート') {
+                button.textContent = 'ストップ';
+                stop_r = false;
+                timerId = setInterval(() => {
+                    let targetIndex = Math.floor(Math.random() * roulette.length);
+                    main.textContent = roulette[targetIndex];
+                    if (stop_r === true) {
+                        clearInterval(timerId);
+                        button.textContent = 'スタート';
+                    }
+                }, 50)
+            } else {
+                button.textContent = 'スタート';
+                clearInterval(timerId);
+                num = main.textContent;
+                ini_array[num - 1][1] = true;
+                let a = document.getElementsByClassName(num);
+                i = 0;
+                while (a[i]) {
+                    a[i].classList.add('hit');
+                    i++;
+                }
+                let targetIndex = roulette.indexOf(Number(num));
+                roulette.splice(targetIndex, 1);
+                history_array.push(num);
+                history.textContent = history_array;
+                check_or_bingo();//ストップされるたびにビンゴ判定関数を呼び出す。
+                let total = result_array.reduce((sum, element) => sum + element[1], 0);
+                document.getElementById('msg').textContent = "総ビンゴ数：" + total;
+
+            }
+        }
+
+
+        //ビンゴ数とリーチ数を数える関数
+        function check_or_bingo() {
+            for (i = 0; i < sheets; i++) {
+                b = [];
+                n = 0;
+                while (n < B * B) {
+
+                    b.push(arrays[i][n][1]);
+                    n++;
+                }
+
+                let bingo = 0;
+                let check = 0;
+                let count = 0;
+
+
+                for (j = 0; j < B; j++) {
+                    for (k = 0; k < B; k++) { if (b[j * B + k] === false) { count++; } }
+                    count_bingo();
+                }
+
+                for (j = 0; j < B; j++) {
+                    for (k = 0; k < B; k++) { if (b[k * B + j] === false) { count++; } }
+                    count_bingo();
+                }
+
+                for (k = 0; k < B; k++) { if (b[k * B + k] === false) { count++; } }
+                count_bingo();
+
+                for (k = 1; k <= B; k++) { if (b[k * B - k] === false) { count++; } }
+                count_bingo();
+
+                result_array[i] = [check, bingo];
+                document.getElementById(i).textContent = "リーチ：" + check + " ビンゴ：" + bingo;
+
+                function count_bingo() {
+                    if (count === 0) {
+                        bingo++;
+                    }
+                    if (count === 1) {
+                        check++;
+                    }
+                    count = 0;
+                }
+            }
+
+        }
+
+
+    </script>
+</body>
+
+</html>
