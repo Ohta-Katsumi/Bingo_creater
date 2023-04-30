@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <title>ビンゴ</title>
@@ -13,57 +14,57 @@
         td {
             border: solid 2px;
             text-align: center;
-            width:36px;
+            width: 36px;
             height: 36px;
         }
 
-        #table-space{
+        #table-space {
             display: flex;
-            flex-wrap:wrap;
+            flex-wrap: wrap;
             justify-content: space-evenly;
         }
 
-        .hit{
+        .hit {
             background-color: red;
         }
 
-        .option{
-            margin-top:15px;
+        .option {
+            margin-top: 15px;
             text-align: center;
         }
 
-        .★{
+        .★ {
             background-color: red;
         }
 
-        #history{
-            width:300px;
+        #history {
+            width: 300px;
             word-wrap: break-word;
         }
 
-        .box{
-            display:inline-block;
+        .box {
+            display: inline-block;
         }
 
 
-        .ID{
+        .ID {
             text-align: center;
             margin-top: 30px;
         }
 
-        .result{
+        .result {
             text-align: center;
-            font-size:0.8em;
+            font-size: 0.8em;
             margin-bottom: 10px;
         }
-
     </style>
 
 </head>
+
 <body>
-<div id="table-space"></div>
-<p>出た値</p>
-<div id ="history"></div>
+    <div id="table-space"></div>
+    <p>出た値</p>
+    <div id="history"></div>
 
 
 
@@ -72,125 +73,125 @@
         let B;
         let array = [];
         let history = [];
-        let game_id =[];
+        let game_id = [];
 
-    document.addEventListener('DOMContentLoaded', abc, false);
- 
-    //ビンゴゲームのプレイヤーidを取得する関数
-    function abc() {
-      fetch('room.php')
-      .then(response => response.text())
-      .then(function(text){
-        if(text !== ""){
-          ID = Number.parseInt(text);
-          
-          def();
-        }else{
-            document.getElementById('table-space').textContent= "満員であるか、まだビンゴシートが作成されていないようです";
+        document.addEventListener('DOMContentLoaded', abc, false);
+
+        //ビンゴゲームのプレイヤーidを取得する関数
+        function abc() {
+            fetch('room.php')
+                .then(response => response.text())
+                .then(function (text) {
+                    if (text !== "") {
+                        ID = Number.parseInt(text);
+
+                        def();
+                    } else {
+                        document.getElementById('table-space').textContent = "満員であるか、まだビンゴシートが作成されていないようです";
+                    }
+                })
         }
-      })
-    }
-    
-    //ビンゴゲームのデータを取得し、描画する関数
-    function def() {
-    fetch('B_ajax.php')
-      .then(response => response.json())
-      .then(function(data){
-          console.log(data);
-          array = data[0][ID-1];
-          history = data[2];
-          game_id = data[3];
-          bingo_sheet_creater();
-          ghi();
-      })
-      .catch(function(){
-          setTimeout(def,1000);
-      })
-    }
-    
-    //ルーレットが回る度に描画を更新する関数
-    function ghi() {
-        fetch('B_ajax.php')
-      .then(response => response.json())
-      .then(function(data){
-          console.log(data);
-          if(game_id === data[3]){
-          if(history !== data[2]){
-          history = data[2];
-          document.getElementById("history").textContent = history;
 
-            if(array !== data[0][ID-1]){
-              array = data[0][ID-1];
-              let b = data[1][ID-1];
-              for(i=0;i<array.length;i++){
-                  if(array[i][1] === true){
-                      document.getElementById(array[i][0]).classList.add('hit');
-                  }//無駄に毎回全探索しているので改善の余地あり
-              }
-              document.getElementById('text').textContent =  "リーチ："+b[0]+" ビンゴ："+b[1];             
-           }
-          
-          }
-          setTimeout(ghi,100);
-        }else{ 
-            //ビンゴシートが再生成されている場合、idを取得し直す。
-            abc();
+        //ビンゴゲームのデータを取得し、描画する関数
+        function def() {
+            fetch('B_ajax.php')
+                .then(response => response.json())
+                .then(function (data) {
+                    console.log(data);
+                    array = data[0][ID - 1];
+                    history = data[2];
+                    game_id = data[3];
+                    bingo_sheet_creater();
+                    ghi();
+                })
+                .catch(function () {
+                    setTimeout(def, 1000);
+                })
         }
-      })
-      .catch(function(){
-          setTimeout(ghi,1000);
-      })
 
-    }
+        //ルーレットが回る度に描画を更新する関数
+        function ghi() {
+            fetch('B_ajax.php')
+                .then(response => response.json())
+                .then(function (data) {
+                    console.log(data);
+                    if (game_id === data[3]) {
+                        if (history !== data[2]) {
+                            history = data[2];
+                            document.getElementById("history").textContent = history;
+
+                            if (array !== data[0][ID - 1]) {
+                                array = data[0][ID - 1];
+                                let b = data[1][ID - 1];
+                                for (i = 0; i < array.length; i++) {
+                                    if (array[i][1] === true) {
+                                        document.getElementById(array[i][0]).classList.add('hit');
+                                    }//無駄に毎回全探索しているので改善の余地あり
+                                }
+                                document.getElementById('text').textContent = "リーチ：" + b[0] + " ビンゴ：" + b[1];
+                            }
+
+                        }
+                        setTimeout(ghi, 100);
+                    } else {
+                        //ビンゴシートが再生成されている場合、idを取得し直す。
+                        abc();
+                    }
+                })
+                .catch(function () {
+                    setTimeout(ghi, 1000);
+                })
+
+        }
 
 
-    //ビンゴシートの描画を生成する関数。bingo.htmlからの流用
-    function bingo_sheet_creater(){
+        //ビンゴシートの描画を生成する関数。bingo.htmlからの流用
+        function bingo_sheet_creater() {
 
-        B = Math.sqrt(array.length);
+            B = Math.sqrt(array.length);
 
 
-        const T = document.getElementById('table-space');
-       while(T.firstChild){
-             T.removeChild(T.firstChild);
+            const T = document.getElementById('table-space');
+            while (T.firstChild) {
+                T.removeChild(T.firstChild);
             }
 
 
-        let p =   document.createElement('div');
-        p.textContent = "ID:"+(ID);
-        p.setAttribute("class","ID");
+            let p = document.createElement('div');
+            p.textContent = "ID:" + (ID);
+            p.setAttribute("class", "ID");
 
-        let table = document.createElement('table');
-        for (j = 0; j < B; j++) {
+            let table = document.createElement('table');
+            for (j = 0; j < B; j++) {
 
-            let tr = document.createElement('tr');
-            for (k = 0; k < B; k++) {
-                let td = document.createElement('td');
-                td.textContent = array[j*B+k][0];
-                td.setAttribute("id", (array[j*B+k][0]));
-                if(array[j*B+k][1] === true){
-                    td.classList.add('hit');
+                let tr = document.createElement('tr');
+                for (k = 0; k < B; k++) {
+                    let td = document.createElement('td');
+                    td.textContent = array[j * B + k][0];
+                    td.setAttribute("id", (array[j * B + k][0]));
+                    if (array[j * B + k][1] === true) {
+                        td.classList.add('hit');
+                    }
+                    tr.appendChild(td);
                 }
-                tr.appendChild(td);
+                table.appendChild(tr);
             }
-            table.appendChild(tr);
+
+            let result = document.createElement('div');
+            result.textContent = "リーチ：0 ビンゴ：0"
+            result.setAttribute("id", "text");
+            result.setAttribute("class", "result");
+
+
+            let box = document.createElement('div');
+            box.setAttribute("class", "box");
+            box.appendChild(p);
+            box.appendChild(table);
+            box.appendChild(result);
+            T.appendChild(box);
+
+
+
         }
-
-        let result = document.createElement('div');
-        result.textContent = "リーチ：0 ビンゴ：0"
-        result.setAttribute("id","text");
-        result.setAttribute("class","result");
-
-
-        let box = document.createElement('div');
-        box.setAttribute("class","box");
-        box.appendChild(p);
-        box.appendChild(table);
-        box.appendChild(result);
-        T.appendChild(box);
-
-
-
-    }
     </script>
 </body>
